@@ -77,11 +77,20 @@ s.id="jfcr-css";
 
 s.textContent=`
 
+/* ✅ FIX DEFINITIVO CLIPPING (AGGIUNTO) */
+#custom-rows-wrapper,
+.srow-section,
+.srow-items-row{
+overflow:visible !important;
+}
+
 #custom-rows-wrapper{
 display:flex;
 flex-direction:column;
 gap:10px;
 margin-bottom:20px;
+position:relative;
+z-index:10;
 }
 
 .srow-section{
@@ -104,40 +113,28 @@ align-items:center;
 justify-content:center;
 cursor:pointer;
 border:1.5px solid rgba(255,255,255,.06);
-transition:all .35s ease;
+transition:all .25s ease;
 overflow:hidden;
 position:relative;
 }
 
 .srow-card:hover{
-transform:translateY(-4px) scale(1.03);
+transform:translateY(-3px) scale(1.02);
 border-color:rgba(255,255,255,.2);
-box-shadow:0 12px 35px rgba(0,0,0,.55);
-}
-
-.srow-card::after{
-content:"";
-position:absolute;
-inset:0;
-background:rgba(0,0,0,0);
-transition:.3s ease;
-}
-
-.srow-card:hover::after{
-background:rgba(0,0,0,.25);
+box-shadow:0 10px 25px rgba(0,0,0,.45);
 }
 
 .srow-card img{
 height:42px;
 max-width:65%;
 object-fit:contain;
-transition:transform .35s ease,filter .35s ease;
+transition:transform .25s ease,filter .25s ease;
 z-index:2;
 }
 
 .srow-card:hover img{
-transform:scale(1.08);
-filter:brightness(1.15);
+transform:scale(1.05);
+filter:brightness(1.1);
 }
 
 .srow-card img.srow-invert{
@@ -156,35 +153,35 @@ grid-template-columns:repeat(auto-fill,minmax(140px,1fr)) !important;
 gap:12px !important;
 margin-top:14px !important;
 max-height:65vh !important;
-overflow-y:auto !important;
 width:100% !important;
-animation:providerSlide .45s cubic-bezier(.2,.9,.2,1);
 
-/* ===== HIDE SCROLLBAR (NETFLIX STYLE) ===== */
-scrollbar-width: none;
--ms-overflow-style: none;
+animation:none !important;
+
+scrollbar-width:none;
+-ms-overflow-style:none;
 }
 
 .srow-items-row::-webkit-scrollbar{
 display:none;
 }
 
-@keyframes providerSlide{
-from{
-opacity:0;
-transform:translateY(-20px) scaleY(.94);
-}
-to{
-opacity:1;
-transform:translateY(0) scaleY(1);
-}
-}
-
+/* ✨ GLOW DESKTOP */
 .srow-thumb{
 position:relative;
 width:135px;
 margin:0 auto;
 cursor:pointer;
+transition:transform .18s ease, box-shadow .18s ease;
+transform-origin:center bottom;
+}
+
+.srow-thumb:hover{
+transform:scale(1.015);
+box-shadow:
+0 0 8px rgba(255,255,255,0.18),
+0 0 18px rgba(120,180,255,0.12),
+0 12px 25px rgba(0,0,0,.35);
+border-radius:14px;
 }
 
 .srow-thumb img{
@@ -212,6 +209,9 @@ z-index:3;
 display:none!important;
 }
 
+/* =========================
+   MOBILE
+========================= */
 @media(max-width:600px){
 
 .srow-scroll{
@@ -221,6 +221,10 @@ grid-template-columns:1fr 1fr;
 
 .srow-card{
 height:80px;
+}
+
+.srow-thumb{
+transform-origin:center bottom;
 }
 
 .srow-items-row{
@@ -236,14 +240,13 @@ width:100px;
 width:100px;
 height:150px;
 }
-
 }
 `;
 
 document.head.appendChild(s);
 }
 
-/* === resto del codice invariato === */
+/* === resto invariato === */
 
 function gc(){try{const c=JSON.parse(localStorage.getItem("jellyfin_credentials")||"{}");const sv=(c.Servers||[])[0]||{};return{token:sv.AccessToken,userId:sv.UserId,base:(sv.ManualAddress||sv.LocalAddress||location.origin).replace(/\/+$/,"")};}catch{return {};}}
 async function fetchByTag(tag){const {token,userId,base}=gc();if(!token||!userId)return[];const tags=tag.split(",").map(t=>t.trim()).filter(Boolean);let allItems=[];for(const studioTag of tags){const url=`${base}/Users/${userId}/Items?IncludeItemTypes=Movie,Series&Recursive=true&SortBy=PremiereDate&SortOrder=Descending&Studios=${encodeURIComponent(studioTag)}`;const r=await fetch(url,{headers:{Authorization:`MediaBrowser Token="${token}"`}});const j=await r.json();if(j.Items?.length)allItems.push(...j.Items);}return[...new Map(allItems.map(i=>[i.Id,i])).values()];}
