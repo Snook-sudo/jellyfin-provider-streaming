@@ -83,6 +83,7 @@ s.textContent=`
 overflow:visible !important;
 }
 
+/* scroll verticale invariato */
 .srow-items-row{
 overflow-y:auto !important;
 max-height:65vh !important;
@@ -91,7 +92,6 @@ animation:none !important;
 scrollbar-width:none;
 -ms-overflow-style:none;
 
-/* 🔥 SOLO MODIFICA SPAZIATURA */
 margin-top:22px !important;
 
 display:grid !important;
@@ -166,12 +166,27 @@ max-width:75%;
 border-color:rgba(255,255,255,.35)!important;
 }
 
+/* =========================
+   FIX PIXAR / IPAD POSTER (UNICA MODIFICA REALE)
+========================= */
 .srow-thumb{
 position:relative;
 width:100%;
+max-width:135px;
+margin:0 auto;
 cursor:pointer;
 transition:transform .18s ease, box-shadow .18s ease;
 transform-origin:center bottom;
+}
+
+.srow-thumb img{
+width:100%;
+max-width:135px;   /* 🔥 blocca effetto “enorme” su iPad */
+height:auto;
+max-height:202px;
+object-fit:cover;
+border-radius:14px;
+box-shadow:0 10px 25px rgba(0,0,0,.4);
 }
 
 .srow-thumb:hover{
@@ -181,14 +196,6 @@ box-shadow:
 0 0 18px rgba(120,180,255,0.12),
 0 12px 25px rgba(0,0,0,.35);
 border-radius:14px;
-}
-
-.srow-thumb img{
-width:100%;
-aspect-ratio:2/3;
-object-fit:cover;
-border-radius:14px;
-box-shadow:0 10px 25px rgba(0,0,0,.4);
 }
 
 .type-badge{
@@ -219,13 +226,14 @@ grid-template-columns:repeat(3,1fr) !important;
 gap:8px !important;
 }
 }
+
 `;
 
 document.head.appendChild(s);
 }
 
 
-/* === resto invariato === */
+/* === resto IDENTICO === */
 
 function gc(){try{const c=JSON.parse(localStorage.getItem("jellyfin_credentials")||"{}");const sv=(c.Servers||[])[0]||{};return{token:sv.AccessToken,userId:sv.UserId,base:(sv.ManualAddress||sv.LocalAddress||location.origin).replace(/\/+$/,"")};}catch{return {};}}
 async function fetchByTag(tag){const {token,userId,base}=gc();if(!token||!userId)return[];const tags=tag.split(",").map(t=>t.trim()).filter(Boolean);let allItems=[];for(const studioTag of tags){const url=`${base}/Users/${userId}/Items?IncludeItemTypes=Movie,Series&Recursive=true&SortBy=PremiereDate&SortOrder=Descending&Studios=${encodeURIComponent(studioTag)}`;const r=await fetch(url,{headers:{Authorization:`MediaBrowser Token="${token}"`}});const j=await r.json();if(j.Items?.length)allItems.push(...j.Items);}return[...new Map(allItems.map(i=>[i.Id,i])).values()];}
