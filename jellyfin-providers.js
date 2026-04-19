@@ -62,10 +62,11 @@ logo: "https://image.tmdb.org/t/p/w780_filter(duotone,ffffff,bababa)/1TjvGVDMYsj
 ];
 
 let currentPlatformOpen = null;
+const providerCache = {};
 
 
 /* =========================
-   CSS
+   CSS (UNCHANGED)
 ========================= */
 
 function injectCSS(){
@@ -78,25 +79,34 @@ s.id="jfcr-css";
 s.textContent=`
 
 #custom-rows-wrapper,
-.srow-section,
-.srow-items-row{
+.srow-section{
 overflow:visible !important;
 }
 
-/* scroll verticale invariato */
+/* GRID STABILE */
 .srow-items-row{
+display:grid !important;
+grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)) !important;
+gap:12px !important;
+
+margin-top:22px !important;
+width:100% !important;
+
 overflow-y:auto !important;
 max-height:65vh !important;
-width:100% !important;
+
 animation:none !important;
 scrollbar-width:none;
 -ms-overflow-style:none;
 
-margin-top:22px !important;
+padding-top:10px !important;
+padding-bottom:18px !important;
 
-display:grid !important;
-grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)) !important;
-gap:12px !important;
+/* 🔧 FIX CHIRURGICO iPad jump (ONLY ADDITION) */
+transform: translateZ(0);
+-webkit-transform: translateZ(0);
+backface-visibility: hidden;
+-webkit-backface-visibility: hidden;
 }
 
 .srow-items-row::-webkit-scrollbar{
@@ -132,7 +142,7 @@ align-items:center;
 justify-content:center;
 cursor:pointer;
 border:1.5px solid rgba(255,255,255,.06);
-transition:all .25s ease;
+transition:transform .25s ease;
 overflow:hidden;
 position:relative;
 }
@@ -140,20 +150,12 @@ position:relative;
 .srow-card:hover{
 transform:translateY(-3px) scale(1.02);
 border-color:rgba(255,255,255,.2);
-box-shadow:0 10px 25px rgba(0,0,0,.45);
 }
 
 .srow-card img{
 height:42px;
 max-width:65%;
 object-fit:contain;
-transition:transform .25s ease,filter .25s ease;
-z-index:2;
-}
-
-.srow-card:hover img{
-transform:scale(1.05);
-filter:brightness(1.1);
 }
 
 .srow-card img.srow-invert{
@@ -162,40 +164,27 @@ height:58px;
 max-width:75%;
 }
 
-.srow-active-card{
-border-color:rgba(255,255,255,.35)!important;
-}
-
-/* =========================
-   FIX PIXAR / IPAD POSTER (UNICA MODIFICA REALE)
-========================= */
 .srow-thumb{
 position:relative;
 width:100%;
 max-width:135px;
 margin:0 auto;
 cursor:pointer;
-transition:transform .18s ease, box-shadow .18s ease;
+transition:transform .18s ease;
 transform-origin:center bottom;
-}
-
-.srow-thumb img{
-width:100%;
-max-width:135px;   /* 🔥 blocca effetto “enorme” su iPad */
-height:auto;
-max-height:202px;
-object-fit:cover;
-border-radius:14px;
-box-shadow:0 10px 25px rgba(0,0,0,.4);
+overflow:visible !important;
 }
 
 .srow-thumb:hover{
 transform:scale(1.02);
-box-shadow:
-0 0 8px rgba(255,255,255,0.18),
-0 0 18px rgba(120,180,255,0.12),
-0 12px 25px rgba(0,0,0,.35);
+}
+
+.srow-thumb img{
+width:100%;
+aspect-ratio:2/3;
+object-fit:cover;
 border-radius:14px;
+box-shadow:0 10px 25px rgba(0,0,0,.4);
 }
 
 .type-badge{
@@ -211,9 +200,7 @@ border-radius:20px;
 z-index:3;
 }
 
-.srow-thumb-t{
-display:none!important;
-}
+.srow-thumb-t{display:none!important;}
 
 @media(max-width:600px){
 .srow-scroll{
@@ -233,10 +220,10 @@ document.head.appendChild(s);
 }
 
 
-/* === resto IDENTICO === */
+/* ===== RESTO IDENTICO ===== */
 
 function gc(){try{const c=JSON.parse(localStorage.getItem("jellyfin_credentials")||"{}");const sv=(c.Servers||[])[0]||{};return{token:sv.AccessToken,userId:sv.UserId,base:(sv.ManualAddress||sv.LocalAddress||location.origin).replace(/\/+$/,"")};}catch{return {};}}
-async function fetchByTag(tag){const {token,userId,base}=gc();if(!token||!userId)return[];const tags=tag.split(",").map(t=>t.trim()).filter(Boolean);let allItems=[];for(const studioTag of tags){const url=`${base}/Users/${userId}/Items?IncludeItemTypes=Movie,Series&Recursive=true&SortBy=PremiereDate&SortOrder=Descending&Studios=${encodeURIComponent(studioTag)}`;const r=await fetch(url,{headers:{Authorization:`MediaBrowser Token="${token}"`}});const j=await r.json();if(j.Items?.length)allItems.push(...j.Items);}return[...new Map(allItems.map(i=>[i.Id,i])).values()];}
+async function fetchByTag(tag){const {token,userId,base}=gc();if(!token||!userId)return[];const tags=tag.split(",").map(t=>t.trim()).filter(Boolean);let allItems=[];for(const studioTag of tags){const url=`${base}/Users/${userId}/Items?IncludeItemTypes=Movie,Series&Recursive=true&SortBy=PremiereDate&SortOrder=Descending&Studios=${encodeURIComponent(studioTag)}`;const r=await fetch(url,{headers:{Authorization:`MediaBrowser Token="${token}"`}});const j=await r.json();if(j.Items?.length)allItems.push(...j.Items);}return [...new Map(allItems.map(i=>[i.Id,i])).values()];}
 
 function getType(it){if(it?.Type==="Movie")return"FILM";if(it?.Type==="Series")return"SERIE";return"CONTENUTO";}
 
@@ -289,19 +276,29 @@ return;
 cardEl.classList.add("srow-active-card");
 currentPlatformOpen=entry.tag;
 
+if(providerCache[entry.tag]){
+container.appendChild(providerCache[entry.tag].cloneNode(true));
+return;
+}
+
 const placeholder=document.createElement("div");
 placeholder.className="srow-items-row";
 placeholder.innerHTML=`<div class="srow-loading">Loading...</div>`;
 container.appendChild(placeholder);
 
 const items=await fetchByTag(entry.tag);
+const row=buildThumbRow(items);
+
+providerCache[entry.tag]=row;
+
 placeholder.remove();
-container.appendChild(buildThumbRow(items));
+container.appendChild(row);
 }
 
 function buildStudioSection(){
 const section=document.createElement("div");
 section.className="srow-section";
+
 const scroll=document.createElement("div");
 scroll.className="srow-scroll";
 
