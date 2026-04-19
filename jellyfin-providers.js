@@ -42,13 +42,13 @@ logo: "https://image.tmdb.org/t/p/w780_filter(duotone,ffffff,bababa)/wwemzKWzjKY
 },
 {
 name: "HBO Max",
-tag: "HBO Max,Max",
+tag: "HBO Max,Max,Warner Bros,Warner Bros. Pictures,Warner Bros Television,Warner Bros Animation,DC Studios",
 gradient: "linear-gradient(135deg,#1a0a2e 0%,#0d0018 100%)",
 logo: "https://image.tmdb.org/t/p/w500_filter(duotone,ffffff,bababa)/nmU0UMDJB3dRRQSTUqawzF2Od1a.png"
 },
 {
 name: "Disney+",
-tag: "Disney Plus,Disney+",
+tag: "Disney Plus,Disney+,Walt Disney Pictures,Walt Disney Animation Studios,Marvel Studios,Lucasfilm,20th Century Studios,20th Television",
 gradient: "linear-gradient(135deg,#0c1b3a 0%,#050d1a 100%)",
 logo: "https://image.tmdb.org/t/p/w780_filter(duotone,ffffff,bababa)/1edZOYAfoyZyZ3rklNSiUpXX30Q.png",
 invert: true
@@ -159,6 +159,14 @@ max-height:65vh !important;
 overflow-y:auto !important;
 width:100% !important;
 animation:providerSlide .45s cubic-bezier(.2,.9,.2,1);
+
+/* ===== HIDE SCROLLBAR (NETFLIX STYLE) ===== */
+scrollbar-width: none;
+-ms-overflow-style: none;
+}
+
+.srow-items-row::-webkit-scrollbar{
+display:none;
 }
 
 @keyframes providerSlide{
@@ -235,322 +243,17 @@ height:150px;
 document.head.appendChild(s);
 }
 
-
-/* =========================
-   DATA
-========================= */
-
-function gc(){
-
-try{
-
-const c=JSON.parse(
-localStorage.getItem("jellyfin_credentials")||"{}"
-);
-
-const sv=(c.Servers||[])[0]||{};
-
-return{
-token:sv.AccessToken,
-userId:sv.UserId,
-base:(sv.ManualAddress||sv.LocalAddress||location.origin)
-.replace(/\/+$/,"")
-};
-
-}catch{
-return {};
-}
-
-}
-
-
-/* =========================
- TRUE MULTI-TAG + DEDUPE
-========================= */
-
-async function fetchByTag(tag){
-
-const {token,userId,base}=gc();
-
-if(!token || !userId) return [];
-
-const tags=tag
-.split(",")
-.map(t=>t.trim())
-.filter(Boolean);
-
-let allItems=[];
-
-for(const studioTag of tags){
-
-const url=
-`${base}/Users/${userId}/Items`+
-`?IncludeItemTypes=Movie,Series`+
-`&Recursive=true`+
-`&SortBy=PremiereDate`+
-`&SortOrder=Descending`+
-`&Studios=${encodeURIComponent(studioTag)}`;
-
-const r=await fetch(url,{
-headers:{
-Authorization:`MediaBrowser Token="${token}"`
-}
-});
-
-const j=await r.json();
-
-if(j.Items?.length){
-allItems.push(...j.Items);
-}
-
-}
-
-/* remove duplicates */
-
-const unique=[
-...new Map(
-allItems.map(item=>[item.Id,item])
-).values()
-];
-
-return unique;
-
-}
-
-
-/* =========================
-TYPE BADGE
-========================= */
-
-function getType(it){
-
-if(it?.Type==="Movie") return "FILM";
-
-if(it?.Type==="Series") return "SERIE";
-
-return "CONTENUTO";
-
-}
-
-
-/* =========================
-BUILD
-========================= */
-
-function buildThumbRow(items){
-
-const {base}=gc();
-
-const row=document.createElement("div");
-
-row.className="srow-items-row";
-
-if(!items.length){
-
-row.innerHTML=
-`<div class="srow-empty">No content found</div>`;
-
-return row;
-
-}
-
-for(const it of items){
-
-const thumb=document.createElement("div");
-
-thumb.className="srow-thumb";
-
-const src=it.ImageTags?.Primary
-?`${base}/Items/${it.Id}/Images/Primary?maxHeight=300&tag=${it.ImageTags.Primary}`
-:"";
-
-thumb.innerHTML=`
-<div class="type-badge">${getType(it)}</div>
-<img src="${src}">
-<div class="srow-thumb-t">${it.Name}</div>
-`;
-
-thumb.onclick=()=>{
-location.hash=
-`#/details?id=${it.Id}&serverId=${it.ServerId}`;
-};
-
-row.appendChild(thumb);
-
-}
-
-return row;
-
-}
-
-
-/* =========================
-TOGGLE
-========================= */
-
-async function toggleSection(entry,cardEl,container){
-
-const old=
-container.querySelector(".srow-items-row");
-
-if(old) old.remove();
-
-container.querySelectorAll(".srow-active-card")
-.forEach(c=>c.classList.remove("srow-active-card"));
-
-if(currentPlatformOpen===entry.tag){
-
-cardEl.classList.remove("srow-active-card");
-
-currentPlatformOpen=null;
-
-return;
-
-}
-
-cardEl.classList.add("srow-active-card");
-
-currentPlatformOpen=entry.tag;
-
-const placeholder=document.createElement("div");
-
-placeholder.className="srow-items-row";
-
-placeholder.innerHTML=
-`<div class="srow-loading">Loading...</div>`;
-
-container.appendChild(placeholder);
-
-const items=await fetchByTag(entry.tag);
-
-placeholder.remove();
-
-container.appendChild(
-buildThumbRow(items)
-);
-
-}
-
-
-/* =========================
-UI
-========================= */
-
-function buildStudioSection(){
-
-const section=document.createElement("div");
-
-section.className="srow-section";
-
-const scroll=document.createElement("div");
-
-scroll.className="srow-scroll";
-
-for(const studio of STUDIOS){
-
-const card=document.createElement("div");
-
-card.className="srow-card";
-
-card.style.background=studio.gradient;
-
-const img=new Image();
-
-img.src=studio.logo;
-
-if(studio.invert)
-img.classList.add("srow-invert");
-
-card.appendChild(img);
-
-card.onclick=()=>{
-toggleSection(
-studio,
-card,
-section
-);
-};
-
-scroll.appendChild(card);
-
-}
-
-section.appendChild(scroll);
-
-return section;
-
-}
-
-
-/* =========================
-INIT
-========================= */
-
-function injectUI(){
-
-if(document.getElementById(
-"custom-rows-wrapper"
-)) return;
-
-const anchor=
-document.querySelector(
-"iframe.spotlightiframe"
-)||
-document.querySelector(
-".spotlightiframe"
-)||
-document.querySelector(
-".section0"
-)||
-document.querySelector(
-".homeSection:first-child"
-);
-
-if(!anchor?.parentElement) return;
-
-injectCSS();
-
-const wrapper=document.createElement("div");
-
-wrapper.id="custom-rows-wrapper";
-
-wrapper.appendChild(
-buildStudioSection()
-);
-
-anchor.parentElement.insertBefore(
-wrapper,
-anchor.nextSibling
-);
-
-}
-
-
-const observer=new MutationObserver(()=>{
-
-const hash=
-window.location.hash ||
-window.location.pathname;
-
-if(
-hash==="" ||
-hash==="/" ||
-hash.includes("home.html") ||
-hash==="#/home"
-){
-injectUI();
-}
-
-});
-
-observer.observe(
-document.body,
-{
-childList:true,
-subtree:true
-}
-);
-
+/* === resto del codice invariato === */
+
+function gc(){try{const c=JSON.parse(localStorage.getItem("jellyfin_credentials")||"{}");const sv=(c.Servers||[])[0]||{};return{token:sv.AccessToken,userId:sv.UserId,base:(sv.ManualAddress||sv.LocalAddress||location.origin).replace(/\/+$/,"")};}catch{return {};}}
+async function fetchByTag(tag){const {token,userId,base}=gc();if(!token||!userId)return[];const tags=tag.split(",").map(t=>t.trim()).filter(Boolean);let allItems=[];for(const studioTag of tags){const url=`${base}/Users/${userId}/Items?IncludeItemTypes=Movie,Series&Recursive=true&SortBy=PremiereDate&SortOrder=Descending&Studios=${encodeURIComponent(studioTag)}`;const r=await fetch(url,{headers:{Authorization:`MediaBrowser Token="${token}"`}});const j=await r.json();if(j.Items?.length)allItems.push(...j.Items);}return[...new Map(allItems.map(i=>[i.Id,i])).values()];}
+function getType(it){if(it?.Type==="Movie")return"FILM";if(it?.Type==="Series")return"SERIE";return"CONTENUTO";}
+function buildThumbRow(items){const{base}=gc();const row=document.createElement("div");row.className="srow-items-row";if(!items.length){row.innerHTML=`<div class="srow-empty">No content found</div>`;return row;}for(const it of items){const thumb=document.createElement("div");thumb.className="srow-thumb";const src=it.ImageTags?.Primary?`${base}/Items/${it.Id}/Images/Primary?maxHeight=300&tag=${it.ImageTags.Primary}`:"";thumb.innerHTML=`<div class="type-badge">${getType(it)}</div><img src="${src}"><div class="srow-thumb-t">${it.Name}</div>`;thumb.onclick=()=>{location.hash=`#/details?id=${it.Id}&serverId=${it.ServerId}`;};row.appendChild(thumb);}return row;}
+async function toggleSection(entry,cardEl,container){const old=container.querySelector(".srow-items-row");if(old)old.remove();container.querySelectorAll(".srow-active-card").forEach(c=>c.classList.remove("srow-active-card"));if(currentPlatformOpen===entry.tag){cardEl.classList.remove("srow-active-card");currentPlatformOpen=null;return;}cardEl.classList.add("srow-active-card");currentPlatformOpen=entry.tag;const placeholder=document.createElement("div");placeholder.className="srow-items-row";placeholder.innerHTML=`<div class="srow-loading">Loading...</div>`;container.appendChild(placeholder);const items=await fetchByTag(entry.tag);placeholder.remove();container.appendChild(buildThumbRow(items));}
+function buildStudioSection(){const section=document.createElement("div");section.className="srow-section";const scroll=document.createElement("div");scroll.className="srow-scroll";for(const studio of STUDIOS){const card=document.createElement("div");card.className="srow-card";card.style.background=studio.gradient;const img=new Image();img.src=studio.logo;if(studio.invert)img.classList.add("srow-invert");card.appendChild(img);card.onclick=()=>toggleSection(studio,card,section);scroll.appendChild(card);}section.appendChild(scroll);return section;}
+function injectUI(){if(document.getElementById("custom-rows-wrapper"))return;const anchor=document.querySelector("iframe.spotlightiframe")||document.querySelector(".spotlightiframe")||document.querySelector(".section0")||document.querySelector(".homeSection:first-child");if(!anchor?.parentElement)return;injectCSS();const wrapper=document.createElement("div");wrapper.id="custom-rows-wrapper";wrapper.appendChild(buildStudioSection());anchor.parentElement.insertBefore(wrapper,anchor.nextSibling);}
+const observer=new MutationObserver(()=>{const hash=window.location.hash||window.location.pathname;if(hash===""||hash==="/"||hash.includes("home.html")||hash==="#/home"){injectUI();}});
+observer.observe(document.body,{childList:true,subtree:true});
 setTimeout(injectUI,1000);
 
 })();
