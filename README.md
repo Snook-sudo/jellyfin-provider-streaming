@@ -7,6 +7,6 @@ Add films and series from streaming providers directly to the home page
 
 1. Install the JS Injector plugin - https://github.com/n00bcodr/Jellyfin-JavaScript-Injector
 
-2. Within Plugins > JS Injector, add a script, name it "Providers streaming" or similar for reference, then paste the raw code of the jellyfin-providers.js file in this project, then save.
+2. Within Plugins > JS Injector, add a script, name it "Providers streaming" or similar for reference, then paste the raw code of the jellyfin-providers.js (static providers) or jellyfin-providers-horizontal-scroll.js (horizontal scroll) file in this project, then save.
 
 3. Hard refresh your browser (ctrl + f5, shift + refresh, or clear site data) and test!
