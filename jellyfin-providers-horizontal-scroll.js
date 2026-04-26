@@ -64,7 +64,7 @@ let currentPlatformOpen = null;
 const providerCache = {};
 
 /* =========================
-   CSS (ONLY CHANGE: HOVER FIX)
+   CSS
 ========================= */
 
 function injectCSS(){
@@ -91,7 +91,7 @@ display:none !important;
 overflow:visible !important;
 }
 
-/* GRID FILM (UNCHANGED) */
+/* GRID FILM */
 .srow-items-row{
 display:grid !important;
 grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)) !important;
@@ -120,7 +120,7 @@ padding:0 3.3%;
 }
 
 /* =========================
-   PROVIDER LAYOUT FIX
+   PROVIDER
 ========================= */
 
 .srow-scroll{
@@ -134,7 +134,7 @@ align-items:stretch;
 /* CARD */
 .srow-card{
 width:100% !important;
-height:108px !important;
+height:92px !important;
 box-sizing:border-box;
 border-radius:14px;
 display:flex;
@@ -148,24 +148,34 @@ background-size:cover;
 background-position:center;
 }
 
-/* ✅ HOVER SOLO DESKTOP (FIX REQUESTED) */
-@media(min-width:1025px){
+/* =========================
+   ⭐ HOVER SOLO WEB (NUOVO)
+========================= */
+
+@media (hover:hover) and (pointer:fine){
+.srow-card{
+transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
 .srow-card:hover{
-border-color:rgba(255,255,255,.18);
+transform: translateY(-3px) scale(1.03);
+border-color: rgba(255,255,255,.22);
+box-shadow: 0 10px 18px rgba(0,0,0,.25);
 }
 }
 
-/* 4K spacing */
+/* 4K */
 @media(min-width:1800px){
 .srow-scroll{
 grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)) !important;
 gap:18px !important;
 }
 .srow-card{
-height:128px !important;
+height:110px !important;
 }
 }
 
+/* IMMAGINI */
 .srow-card img{
 height:42px;
 max-width:70%;
@@ -184,13 +194,20 @@ border-color:rgba(120,200,255,.35) !important;
 box-shadow:0 0 6px rgba(80,160,255,.18) !important;
 }
 
-/* THUMB (UNCHANGED) */
+/* THUMB */
 .srow-thumb{
 position:relative;
 width:100%;
 max-width:135px;
 margin:0 auto;
 cursor:pointer;
+transition: transform .18s ease;
+}
+
+@media (hover:hover) and (pointer:fine){
+.srow-thumb:hover{
+transform: scale(1.04);
+}
 }
 
 .srow-thumb img{
@@ -214,7 +231,7 @@ border-radius:20px;
 z-index:3;
 }
 
-/* MOBILE SWIPE (UNCHANGED) */
+/* MOBILE */
 @media(max-width:600px){
 
 .srow-scroll{
@@ -229,7 +246,7 @@ overscroll-behavior: contain;
 .srow-card{
 flex:0 0 110px !important;
 width:110px !important;
-height:100px !important;
+height:86px !important;
 }
 
 .srow-items-row{
@@ -237,7 +254,7 @@ grid-template-columns:repeat(3,1fr) !important;
 }
 }
 
-/* TABLET SWIPE (UNCHANGED) */
+/* TABLET */
 @media(min-width:601px) and (max-width:1024px){
 
 .srow-scroll{
@@ -254,7 +271,7 @@ overscroll-behavior: contain;
 .srow-card{
 flex:0 0 110px !important;
 width:110px !important;
-height:100px !important;
+height:86px !important;
 }
 }
 
@@ -376,7 +393,6 @@ section.className="srow-section";
 const scroll=document.createElement("div");
 scroll.className="srow-scroll";
 
-/* SWIPE INTACT */
 scroll.addEventListener("touchstart", e=>e.stopPropagation(), {passive:true});
 scroll.addEventListener("touchmove", e=>e.stopPropagation(), {passive:true});
 
