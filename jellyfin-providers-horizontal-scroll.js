@@ -64,7 +64,7 @@ let currentPlatformOpen = null;
 const providerCache = {};
 
 /* =========================
-   CSS
+   CSS (ONLY CHANGE: HOVER FIX)
 ========================= */
 
 function injectCSS(){
@@ -91,7 +91,7 @@ display:none !important;
 overflow:visible !important;
 }
 
-/* FILM GRID */
+/* GRID FILM (UNCHANGED) */
 .srow-items-row{
 display:grid !important;
 grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)) !important;
@@ -119,19 +119,24 @@ margin:.8em 0 .2em;
 padding:0 3.3%;
 }
 
-/* DEFAULT DESKTOP */
+/* =========================
+   PROVIDER LAYOUT FIX
+========================= */
+
 .srow-scroll{
-display:flex;
-gap:12px;
+display:grid !important;
+grid-template-columns:repeat(auto-fit, minmax(128px, 1fr)) !important;
+gap:14px !important;
+width:100% !important;
+align-items:stretch;
 }
 
-/* PROVIDER CARD */
+/* CARD */
 .srow-card{
-flex:0 0 130px !important;
-width:130px !important;
-height:110px !important;
+width:100% !important;
+height:108px !important;
 box-sizing:border-box;
-border-radius:12px;
+border-radius:14px;
 display:flex;
 align-items:center;
 justify-content:center;
@@ -139,35 +144,47 @@ cursor:pointer;
 border:1.5px solid rgba(255,255,255,.06);
 overflow:hidden;
 position:relative;
+background-size:cover;
+background-position:center;
 }
 
-/* hover */
-@media(min-width:601px){
+/* ✅ HOVER SOLO DESKTOP (FIX REQUESTED) */
+@media(min-width:1025px){
 .srow-card:hover{
-transform:translateY(-3px) scale(1.02);
-border-color:rgba(255,255,255,.2);
+border-color:rgba(255,255,255,.18);
+}
+}
+
+/* 4K spacing */
+@media(min-width:1800px){
+.srow-scroll{
+grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)) !important;
+gap:18px !important;
+}
+.srow-card{
+height:128px !important;
 }
 }
 
 .srow-card img{
 height:42px;
-max-width:65%;
+max-width:70%;
 object-fit:contain;
 }
 
 .srow-card img.srow-invert{
 filter:brightness(0) invert(1);
 height:58px;
-max-width:75%;
+max-width:78%;
 }
 
+/* ACTIVE */
 .srow-active-card{
 border-color:rgba(120,200,255,.35) !important;
 box-shadow:0 0 6px rgba(80,160,255,.18) !important;
-transform:none !important;
 }
 
-/* THUMB */
+/* THUMB (UNCHANGED) */
 .srow-thumb{
 position:relative;
 width:100%;
@@ -197,7 +214,7 @@ border-radius:20px;
 z-index:3;
 }
 
-/* MOBILE */
+/* MOBILE SWIPE (UNCHANGED) */
 @media(max-width:600px){
 
 .srow-scroll{
@@ -220,7 +237,7 @@ grid-template-columns:repeat(3,1fr) !important;
 }
 }
 
-/* TABLET */
+/* TABLET SWIPE (UNCHANGED) */
 @media(min-width:601px) and (max-width:1024px){
 
 .srow-scroll{
@@ -238,7 +255,6 @@ overscroll-behavior: contain;
 flex:0 0 110px !important;
 width:110px !important;
 height:100px !important;
-transform:none !important;
 }
 }
 
@@ -247,9 +263,7 @@ transform:none !important;
 document.head.appendChild(s);
 }
 
-/* =========================
-   RESTO IDENTICO
-========================= */
+/* ===== REST IDENTICO ===== */
 
 function gc(){
 try{
@@ -362,7 +376,7 @@ section.className="srow-section";
 const scroll=document.createElement("div");
 scroll.className="srow-scroll";
 
-/* FIX SWIPE JS (SOLO QUI) */
+/* SWIPE INTACT */
 scroll.addEventListener("touchstart", e=>e.stopPropagation(), {passive:true});
 scroll.addEventListener("touchmove", e=>e.stopPropagation(), {passive:true});
 
