@@ -70,7 +70,7 @@ const providerCache = {};
 function injectCSS(){
 
 const old = document.getElementById("jfcr-css");
-if(old) old.remove(); //  FIX: evita UI sparita
+if(old) old.remove();
 
 const s = document.createElement("style");
 s.id="jfcr-css";
@@ -91,7 +91,7 @@ display:none !important;
 overflow:visible !important;
 }
 
-/* FILM GRID (INVARIATO) */
+/* FILM GRID */
 .srow-items-row{
 display:grid !important;
 grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)) !important;
@@ -141,7 +141,7 @@ overflow:hidden;
 position:relative;
 }
 
-/* hover SOLO desktop */
+/* hover */
 @media(min-width:601px){
 .srow-card:hover{
 transform:translateY(-3px) scale(1.02);
@@ -161,14 +161,13 @@ height:58px;
 max-width:75%;
 }
 
-/* glow leggero FIX */
 .srow-active-card{
 border-color:rgba(120,200,255,.35) !important;
 box-shadow:0 0 6px rgba(80,160,255,.18) !important;
 transform:none !important;
 }
 
-/* THUMB FILM */
+/* THUMB */
 .srow-thumb{
 position:relative;
 width:100%;
@@ -198,9 +197,7 @@ border-radius:20px;
 z-index:3;
 }
 
-/* =========================
-   MOBILE
-========================= */
+/* MOBILE */
 @media(max-width:600px){
 
 .srow-scroll{
@@ -208,6 +205,8 @@ display:flex !important;
 overflow-x:auto !important;
 overflow-y:hidden !important;
 gap:10px;
+touch-action: pan-x;
+overscroll-behavior: contain;
 }
 
 .srow-card{
@@ -221,9 +220,7 @@ grid-template-columns:repeat(3,1fr) !important;
 }
 }
 
-/* =========================
-   TABLET FIX (SOLO SCROLL ORIZZONTALE)
-========================= */
+/* TABLET */
 @media(min-width:601px) and (max-width:1024px){
 
 .srow-scroll{
@@ -233,6 +230,8 @@ overflow-x:auto !important;
 overflow-y:hidden !important;
 gap:10px;
 -webkit-overflow-scrolling:touch;
+touch-action: pan-x;
+overscroll-behavior: contain;
 }
 
 .srow-card{
@@ -241,7 +240,6 @@ width:110px !important;
 height:100px !important;
 transform:none !important;
 }
-
 }
 
 `;
@@ -262,9 +260,7 @@ token:sv.AccessToken,
 userId:sv.UserId,
 base:(sv.ManualAddress||sv.LocalAddress||location.origin).replace(/\/+$/,"")
 };
-}catch{
-return {};
-}
+}catch{return {};}
 }
 
 async function fetchByTag(tag){
@@ -280,9 +276,7 @@ const url=`${base}/Users/${userId}/Items?IncludeItemTypes=Movie,Series&Recursive
 const r=await fetch(url,{headers:{Authorization:`MediaBrowser Token="${token}"`}});
 const j=await r.json();
 
-if(j?.Items?.length){
-allItems.push(...j.Items);
-}
+if(j?.Items?.length) allItems.push(...j.Items);
 }
 
 return [...new Map(allItems.map(i=>[i.Id,i])).values()];
@@ -342,16 +336,8 @@ cardEl.classList.add("srow-active-card");
 currentPlatformOpen=entry.tag;
 
 if(providerCache[entry.tag]){
-    // FIX TABLET: mai usare cloneNode (rompe onclick film)
-    const cached = providerCache[entry.tag];
-
-    // rimuove eventuali duplicati prima
-    const old = container.querySelector(".srow-items-row");
-    if(old) old.remove();
-
-    // ri-append del nodo originale (non clonato)
-    container.appendChild(cached);
-    return;
+container.appendChild(providerCache[entry.tag]);
+return;
 }
 
 const placeholder=document.createElement("div");
@@ -375,6 +361,10 @@ section.className="srow-section";
 
 const scroll=document.createElement("div");
 scroll.className="srow-scroll";
+
+/* FIX SWIPE JS (SOLO QUI) */
+scroll.addEventListener("touchstart", e=>e.stopPropagation(), {passive:true});
+scroll.addEventListener("touchmove", e=>e.stopPropagation(), {passive:true});
 
 for(const studio of STUDIOS){
 const card=document.createElement("div");
